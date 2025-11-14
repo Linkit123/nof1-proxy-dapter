@@ -1,28 +1,102 @@
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fexamples%2Ftree%2Fmain%2Fpython%2Ffastapi&demo-title=FastAPI&demo-description=Use%20FastAPI%20on%20Vercel%20with%20Serverless%20Functions%20using%20the%20Python%20Runtime.&demo-url=https%3A%2F%2Fvercel-plus-fastapi.vercel.app%2F&demo-image=https://assets.vercel.com/image/upload/v1669994600/random/python.png)
+# NOF1 API Proxy Service
 
-# FastAPI + Vercel
+Một FastAPI service để proxy các cuộc gọi API đến NOF1, sử dụng `curl_cffi` để bỏ qua các biện pháp chống bot.
 
-This example shows how to use FastAPI on Vercel with Serverless Functions using the [Python Runtime](https://vercel.com/docs/concepts/functions/serverless-functions/runtimes/python).
+## Cài đặt
 
-## Demo
-
-https://vercel-plus-fastapi.vercel.app/
-
-## How it Works
-
-This example uses the Asynchronous Server Gateway Interface (ASGI) with FastAPI to enable handling requests on Vercel with Serverless Functions.
-
-## Running Locally
-
+1. Cài đặt Python dependencies:
 ```bash
-npm i -g vercel
-vercel dev
+pip install -r requirements.txt
 ```
 
-Your FastAPI application is now available at `http://localhost:3000`.
+2. (Tùy chọn) Cấu hình environment variables trong file `.env`:
+```
+NOF1_BASE_URL=https://nof1.ai
+REQUEST_TIMEOUT=30
+PORT=8000
+HOST=0.0.0.0
+ENV=development
+```
 
-## One-Click Deploy
+## Chạy Service
 
-Deploy the example using [Vercel](https://vercel.com?utm_source=github&utm_medium=readme&utm_campaign=vercel-examples):
+### Windows
+```bash
+start.bat
+```
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fexamples%2Ftree%2Fmain%2Fpython%2Ffastapi&demo-title=FastAPI&demo-description=Use%20FastAPI%20on%20Vercel%20with%20Serverless%20Functions%20using%20the%20Python%20Runtime.&demo-url=https%3A%2F%2Fvercel-plus-fastapi.vercel.app%2F&demo-image=https://assets.vercel.com/image/upload/v1669994600/random/python.png)
+### Linux/macOS
+```bash
+chmod +x start.sh
+./start.sh
+```
+
+### Hoặc chạy trực tiếp
+```bash
+python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+## API Endpoints
+
+### Health Check
+- **GET** `/health`
+- Kiểm tra trạng thái service
+
+### Account Totals (Proxy NOF1 API)
+- **GET** `/api/account-totals?marker=<số>`
+- Proxy cho NOF1 account totals API
+- Parameters:
+  - `marker` (optional): Marker cho pagination
+
+### Generic Proxy
+- **GET** `/api/proxy?url=<url>&method=<method>`
+- Proxy cho bất kỳ NOF1 API nào
+- Parameters:
+  - `url`: URL đầy đủ để proxy (phải bắt đầu bằng NOF1_BASE_URL)
+  - `method`: HTTP method (mặc định GET)
+
+## Tính năng
+
+- ✅ Browser impersonation với Chrome 120
+- ✅ Headers được tối ưu để giống browser thật
+- ✅ Xử lý lỗi chi tiết
+- ✅ Response format chuẩn hóa
+- ✅ CORS support
+- ✅ Health check endpoint
+- ✅ Environment configuration
+- ✅ Request/Response logging
+
+## Response Format
+
+Tất cả API endpoints trả về format chuẩn:
+
+```json
+{
+  "success": true,
+  "data": {
+    // Dữ liệu thực tế từ NOF1 API
+  },
+  "error": null,
+  "timestamp": "2025-11-14T10:30:00.000Z"
+}
+```
+
+## Lỗi thường gặp
+
+1. **Connection refused**: Đảm bảo service đã được start
+2. **Import errors**: Chạy `pip install -r requirements.txt`
+3. **Port đã được sử dụng**: Thay đổi PORT trong .env hoặc kill process đang sử dụng port 8000
+
+## Tích hợp với TypeScript
+
+Service này được thiết kế để tích hợp với `Nof1DataProvider` trong TypeScript codebase. TypeScript client sẽ gọi đến Python proxy service thay vì gọi trực tiếp NOF1 API.
+
+## Bảo mật
+
+- Service chỉ cho phép proxy đến các URL bắt đầu bằng `NOF1_BASE_URL`
+- Không có authentication - phù hợp cho môi trường development local
+- Nên thêm authentication nếu deploy lên production
+
+## Development
+
+Để development, đặt `ENV=development` trong `.env` để bật auto-reload mode.
